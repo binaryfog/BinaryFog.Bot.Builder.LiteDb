@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Company>BinaryFog.com</Company>
+    <Authors>Catalin Hatmanu</Authors>
+    <Copyright>BinaryFog.com 2018</Copyright>
+    <Version>0.0.1</Version>
+    <Description>Microsoft Bot Builder Storage provider based on LiteDb database</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LiteDB" Version="4.1.4" />
+    <PackageReference Include="Microsoft.Bot.Builder" Version="4.0.7" />
+  </ItemGroup>
+
+</Project>
