@@ -15,25 +15,28 @@ namespace BinaryFog.Bot.Builder.LiteDb
     /// </summary>
     public class LiteDbStorage : IStorage
     {
-        private static readonly Newtonsoft.Json.JsonSerializer StateJsonSerializer = new Newtonsoft.Json.JsonSerializer() { TypeNameHandling = TypeNameHandling.All };
-
-        private readonly Dictionary<string, JObject> _memory;
-        private readonly object _syncroot = new object();
-        private int _eTag = 0;
+        private static readonly JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
 
         private string databaseFileName;
         private const string CollectionName = "storage";
         private const string KeyName = "_id";
         private const string ContentName = "content";
+        private const string DefaultDbName = "mioData.db";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MemoryStorage"/> class.
+        /// Initializes a new instance of the <see cref="LiteDbStorage"/> class.
         /// </summary>
         /// <param name="databaseFileName">Loaction of LiteDb database file name.</param>
-        public LiteDbStorage( string databaseFileName)
+        public LiteDbStorage(string databaseFileName)
         {
-            //_memory = dictionary ?? new Dictionary<string, JObject>();
             this.databaseFileName = databaseFileName;
+        }
+
+        public LiteDbStorage()
+        {
+            //create a new LiteDb named mioData.db on current directory
+
+            this.databaseFileName = DefaultDbName;
         }
 
         /// <summary>
@@ -45,17 +48,19 @@ namespace BinaryFog.Bot.Builder.LiteDb
         /// <returns>A task that represents the work queued to execute.</returns>
         /// <seealso cref="ReadAsync(string[], CancellationToken)"/>
         /// <seealso cref="WriteAsync(IDictionary{string, object}, CancellationToken)"/>
-        public Task DeleteAsync(string[] keys, CancellationToken cancellationToken)
+        public Task DeleteAsync(string[] keys, CancellationToken cancellationToken = default(CancellationToken))
         {
-            lock (_syncroot)
+            if (keys == null)
             {
-                using (var db = new LiteEngine(databaseFileName))
+                throw new ArgumentNullException(nameof(keys));
+            }
+
+            using (var db = new LiteEngine(databaseFileName))
+            {
+                foreach (var key in keys)
                 {
-                    foreach (var key in keys)
-                    {
-                        //_memory.Remove(key);
-                        db.Delete(CollectionName, Query.EQ(KeyName, key));
-                    }
+                    //_memory.Remove(key);
+                    db.Delete(CollectionName, Query.EQ(KeyName, key));
                 }
             }
 
@@ -73,28 +78,32 @@ namespace BinaryFog.Bot.Builder.LiteDb
         /// the items read, indexed by key.</remarks>
         /// <seealso cref="DeleteAsync(string[], CancellationToken)"/>
         /// <seealso cref="WriteAsync(IDictionary{string, object}, CancellationToken)"/>
-        public Task<IDictionary<string, object>> ReadAsync(string[] keys, CancellationToken cancellationToken)
+        public Task<IDictionary<string, object>> ReadAsync(string[] keys, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var storeItems = new Dictionary<string, object>(keys.Length);
-            lock (_syncroot)
+            if (keys == null)
             {
-                using (var db = new LiteEngine(databaseFileName))
-                {
-                    foreach (var key in keys)
-                    {
-                        var value = db.Find(CollectionName, Query.EQ(KeyName, key)).FirstOrDefault();
-                        if (value != null)
-                        {
-                            var state = JsonConvert.DeserializeObject(value[ContentName]);
+                throw new ArgumentNullException(nameof(keys));
+            }
 
-                            if (state != null)
-                            {
-                                storeItems.Add(key, JObject.FromObject(state, StateJsonSerializer));
-                            }
+
+            var storeItems = new Dictionary<string, object>(keys.Length);
+            using (var db = new LiteEngine(databaseFileName))
+            {
+                foreach (var key in keys)
+                {
+                    var value = db.Find(CollectionName, Query.EQ(KeyName, key)).FirstOrDefault();
+                    if (value != null)
+                    {
+                        var state = JsonConvert.DeserializeObject(value[ContentName], settings);
+
+                        if (state != null)
+                        {
+                            storeItems.Add(key, state);
                         }
                     }
                 }
             }
+
 
             return Task.FromResult<IDictionary<string, object>>(storeItems);
         }
@@ -108,10 +117,13 @@ namespace BinaryFog.Bot.Builder.LiteDb
         /// <returns>A task that represents the work queued to execute.</returns>
         /// <seealso cref="DeleteAsync(string[], CancellationToken)"/>
         /// <seealso cref="ReadAsync(string[], CancellationToken)"/>
-        public Task WriteAsync(IDictionary<string, object> changes, CancellationToken cancellationToken)
+        public Task WriteAsync(IDictionary<string, object> changes, CancellationToken cancellationToken = default(CancellationToken))
         {
-            lock (_syncroot)
+            if (changes == null)
             {
+                throw new ArgumentNullException(nameof(changes));
+            }
+
                 using (var db = new LiteEngine(databaseFileName))
                 {
 
@@ -119,52 +131,9 @@ namespace BinaryFog.Bot.Builder.LiteDb
                     {
                         var newValue = change.Value;
 
-                        var oldStateETag = default(string);
-                        var oldValue = db.Find(CollectionName, Query.EQ(KeyName, change.Key)).FirstOrDefault();
-                        if (oldValue != null)
-                        {
-                            var oldState = JObject.FromObject(JsonConvert.DeserializeObject(oldValue[ContentName]), StateJsonSerializer);
+                        var json = JsonConvert.SerializeObject(newValue, typeof(object), settings);
 
-                            //if (oldState.GetType().GetProperty("eTag") != null)
-                            //{
-                            //    oldStateETag = (string)oldState.GetType().GetProperty("eTag").GetValue(oldState);
-                            //}
-                            if (oldState.TryGetValue("eTag", out var etag))
-                            {
-                                oldStateETag = etag.Value<string>();
-                            }
-                        }
-
-                        //if (_memory.TryGetValue(change.Key, out var oldState))
-                        //{
-                        //    if (oldState.TryGetValue("eTag", out var etag))
-                        //    {
-                        //        oldStateETag = etag.Value<string>();
-                        //    }
-                        //}
-
-                        var newState = JObject.FromObject(newValue, StateJsonSerializer);
-
-                        // Set ETag if applicable
-                        if (newValue is IStoreItem newStoreItem)
-                        {
-                            if (oldStateETag != null
-                                    &&
-                               newStoreItem.ETag != "*"
-                                    &&
-                               newStoreItem.ETag != oldStateETag)
-                            {
-                                throw new Exception($"Etag conflict.\r\n\r\nOriginal: {newStoreItem.ETag}\r\nCurrent: {oldStateETag}");
-                            }
-
-                            newState["eTag"] = (_eTag++).ToString();
-                        }
-
-                        string json = JsonConvert.SerializeObject(newState, Formatting.None);
-                        db.Upsert(CollectionName, new BsonDocument { { KeyName, change.Key }, { ContentName, json } } ); // false (update)
-
-                        //_memory[change.Key] = newState;
-                    }
+                    db.Upsert(CollectionName, new BsonDocument { { KeyName, change.Key }, { ContentName, json } }); // false (update)        
 
                 }//end using
             }

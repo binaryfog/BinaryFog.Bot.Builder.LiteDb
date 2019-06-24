@@ -1,0 +1,1 @@
+{"$type":"System.Collections.Concurrent.ConcurrentDictionary`2[[System.String, System.Private.CoreLib],[System.Object, System.Private.CoreLib]], System.Collections.Concurrent","EchoBotAccessors.CounterState":{"$type":"Microsoft.BotBuilderSamples.CounterState, EchoBotWithCounter","TurnCount":3}}

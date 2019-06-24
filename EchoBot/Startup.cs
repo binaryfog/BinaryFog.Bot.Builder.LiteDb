@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Bot.Builder.FileSystemStorage;
 
 namespace Microsoft.BotBuilderSamples
 {
@@ -104,7 +105,7 @@ namespace Microsoft.BotBuilderSamples
                 //IStorage dataStore = new MemoryStorage();
 
                 var storageDbPath = Configuration.GetSection("storage")?.Value;
-                IStorage dataStore = new BinaryFog.Bot.Builder.LiteDb.LiteDbStorage(storageDbPath);
+                IStorage dataStore = new FileSystemStorage(storageDbPath);
 
                 // For production bots use the Azure Blob or
                 // Azure CosmosDB storage providers. For the Azure
