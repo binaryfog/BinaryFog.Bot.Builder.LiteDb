@@ -142,9 +142,15 @@ namespace BinaryFog.Bot.Builder.LiteDb.Tests
             // TODO: this code as a generic test doesn't make much sense - for now just eliminating the custom exception
             // Writing large objects in parallel might raise an InvalidOperationException
 
-                await Task.WhenAll(
-                    storeItemsList.Select(storeItems =>
-                        Task.Run(async () => await storage.WriteAsync(storeItems))));
+            //await Task.WhenAll(
+            //    storeItemsList.Select(storeItems =>
+            //        Task.Run(async () => await storage.WriteAsync(storeItems))));
+
+            Parallel.Invoke(
+                async() =>  { await storage.WriteAsync(storeItemsList[0]); },
+                async () => { await storage.WriteAsync(storeItemsList[1]); },
+                async () => { await storage.WriteAsync(storeItemsList[2]); }
+                ); //close parallel.invoke
 
 
             var readStoreItems = new Dictionary<string, object>(await storage.ReadAsync(new[] { "createPoco" }));
