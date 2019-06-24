@@ -125,5 +125,50 @@ namespace BinaryFog.Bot.Builder.LiteDb.Tests
 
 
         }
+
+        [TestMethod]
+        public async Task BatchCreateBigObjectsShouldSucceed()
+        {
+            LiteDbStorage storage = new LiteDbStorage();
+            string[] stringArray = GenerateExtraBytes(23);
+
+            var storeItemsList = new List<Dictionary<string, object>>(new[]
+                {
+                new Dictionary<string, object> { ["createPoco"] = new PocoItem() { Id = "1", Count = 0, ExtraBytes = stringArray } },
+                new Dictionary<string, object> { ["createPoco"] = new PocoItem() { Id = "1", Count = 1, ExtraBytes = stringArray } },
+                new Dictionary<string, object> { ["createPoco"] = new PocoItem() { Id = "1", Count = 2, ExtraBytes = stringArray } },
+            });
+
+            // TODO: this code as a generic test doesn't make much sense - for now just eliminating the custom exception
+            // Writing large objects in parallel might raise an InvalidOperationException
+
+                await Task.WhenAll(
+                    storeItemsList.Select(storeItems =>
+                        Task.Run(async () => await storage.WriteAsync(storeItems))));
+
+
+            var readStoreItems = new Dictionary<string, object>(await storage.ReadAsync(new[] { "createPoco" }));
+            Assert.IsInstanceOfType(readStoreItems["createPoco"], typeof(PocoItem));
+            var createPoco = readStoreItems["createPoco"] as PocoItem;
+            Assert.AreEqual(createPoco.Id, "1", "createPoco.id should be 1");
+        }
+
+        private string[] GenerateExtraBytes(long minimumExtraBytes = 0)
+        {
+            string[] stringArray = null;
+
+            if (minimumExtraBytes > 0)
+            {
+                // chunks of maximum string size to fill the extra bytes request
+                var extraStringCount = (int)(minimumExtraBytes / int.MaxValue);
+                stringArray = Enumerable.Range(0, extraStringCount).Select(i => new string('X', int.MaxValue / 2)).ToArray();
+
+                // Append the remaining string size
+                stringArray = stringArray.Append(new string('X', (int)(minimumExtraBytes % int.MaxValue) / 2)).ToArray();
+            }
+
+            return stringArray;
+        }
+
     }
 }
