@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryFog.Bot.Builder.LiteDb", "BinaryFog.Bot.Builder.LiteDb\BinaryFog.Bot.Builder.LiteDb.csproj", "{14E032E9-4708-464D-8F86-4E671FB78A7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryFog.Bot.Builder.LiteDb.Tests", "BinaryFog.Bot.Builder.LiteDb.Tests\BinaryFog.Bot.Builder.LiteDb.Tests.csproj", "{B2586F6E-A36C-45BA-AF7D-9EF29B60CFC1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinaryFog.Bot.Builder.LiteDb.Tests", "BinaryFog.Bot.Builder.LiteDb.Tests\BinaryFog.Bot.Builder.LiteDb.Tests.csproj", "{B2586F6E-A36C-45BA-AF7D-9EF29B60CFC1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StateMangementBot", "StateManagementBot\StateMangementBot.csproj", "{D28CDA83-4764-4C3B-9D40-0F13F6989FB5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{B2586F6E-A36C-45BA-AF7D-9EF29B60CFC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2586F6E-A36C-45BA-AF7D-9EF29B60CFC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2586F6E-A36C-45BA-AF7D-9EF29B60CFC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D28CDA83-4764-4C3B-9D40-0F13F6989FB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D28CDA83-4764-4C3B-9D40-0F13F6989FB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D28CDA83-4764-4C3B-9D40-0F13F6989FB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D28CDA83-4764-4C3B-9D40-0F13F6989FB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
