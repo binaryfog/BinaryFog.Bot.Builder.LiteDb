@@ -1,4 +1,5 @@
 ﻿using LiteDB;
+using LiteDB.Engine;
 using Microsoft.Bot.Builder;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -55,12 +56,15 @@ namespace BinaryFog.Bot.Builder.LiteDb
                 throw new ArgumentNullException(nameof(keys));
             }
 
-            using (var db = new LiteEngine(databaseFileName))
+            using (var db = new LiteDatabase(databaseFileName))
             {
+                var col = db.GetCollection(CollectionName);
+
                 foreach (var key in keys)
                 {
                     //_memory.Remove(key);
-                    db.Delete(CollectionName, Query.EQ(KeyName, key));
+                    //db.Delete(CollectionName, Query.EQ(KeyName, key));
+                    col.Delete(key);
                 }
             }
 
@@ -87,11 +91,15 @@ namespace BinaryFog.Bot.Builder.LiteDb
 
 
             var storeItems = new Dictionary<string, object>(keys.Length);
-            using (var db = new LiteEngine(databaseFileName))
+            using (var db = new LiteDatabase(databaseFileName))
             {
+                var col = db.GetCollection(CollectionName);
+
                 foreach (var key in keys)
                 {
-                    var value = db.Find(CollectionName, Query.EQ(KeyName, key)).FirstOrDefault();
+                    //var value = db.Find(CollectionName, Query.EQ(KeyName, key)).FirstOrDefault();
+                    var value = col.Find( Query.EQ(KeyName, key) ).FirstOrDefault();
+
                     if (value != null)
                     {
                         var state = JsonConvert.DeserializeObject(value[ContentName], settings);
@@ -124,16 +132,18 @@ namespace BinaryFog.Bot.Builder.LiteDb
                 throw new ArgumentNullException(nameof(changes));
             }
 
-                using (var db = new LiteEngine(databaseFileName))
+                using (var db = new LiteDatabase(databaseFileName))
                 {
 
-                    foreach (var change in changes)
+                var col = db.GetCollection(CollectionName);
+                foreach (var change in changes)
                     {
                         var newValue = change.Value;
 
                         var json = JsonConvert.SerializeObject(newValue, typeof(object), settings);
 
-                    db.Upsert(CollectionName, new BsonDocument { { KeyName, change.Key }, { ContentName, json } }); // false (update)        
+                    //db.Upsert(CollectionName, new BsonDocument { { KeyName, change.Key }, { ContentName, json } }); // false (update)        
+                    col.Upsert(new BsonDocument { { KeyName, change.Key }, { ContentName, json } });
 
                 }//end using
             }
